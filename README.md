@@ -2,22 +2,22 @@
 This is a javascript implementation for the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method)
 
 ## What does it try to solve?
-Let's say you want simulate the solar system. You'll recall all objects in the universe effect one another through their gravitational pull. A naive simulator might simulate this as follows:
+Let's say you want simulate the solar system. You'll recall all objects in the universe effect one another through gravity. A naive simulator might simulate this as follows:
 
     for every object in the universe:
     	for every other object in the universe:
     		calculate the force exerted between the objects
 
-This is a task with O(N^2) complexity. If I want to simulate 3 objects I have to make 6 calculations per timestep. If I want to simulate 10 objects I have to make 90 calculations per timestep. This quickly gets out of hand. What I really want is a task with O(N) complexity - I want the number of calculations to scale linearly with the number of objects.
+This is a task with O(N^2) complexity. If I want to simulate 3 objects I have to make 6 calculations per timestep. If I want to simulate 10 objects I have to make 90 calculations per timestep. Things quickly gets out of hand. What I really want is a task with O(N) complexity - I want the number of calculations to scale linearly with the number of objects.
 
-A better approach might be to limit interaction only when objects fall within a certain range. You can setup a grid to keep track of when this happens. If two objects occupy adjacent grid cells, they're within range. 
+A better approach might be to limit interaction, so objects have to fall within a certain range. You can setup a grid to keep track of when this happens. If two objects occupy adjacent grid cells, they're within range. 
 
-There's still a problem with this approach, though. It doesn't work for really massive objects that would normally influence objects outside their grid cell. Also, if there's too many objects in the same grid cell, we're back to same problem we encountered earlier with making a bunch of calculations.
+There's still a problem with this approach, though. It doesn't work for really massive objects that would normally influence objects outside their grid cell. Also, if there's too many objects in the same grid cell, we're back to same problem we encountered earlier when we were making a bunch of calculations.
 
 ## How does it try to solve it?
 The solution relies upon an observation - accuracy becomes less important as distance increases. As a matter of fact, accuracy becomes *exponentially* less important. This is because gravity follows an [inverse square law](https://en.wikipedia.org/wiki/Inverse-square_law). 
 
-This means we can represent gravity by a sort of "nested grid," along the same line as a [quadtree](https://en.wikipedia.org/wiki/Quadtree) or [octree](https://en.wikipedia.org/wiki/Octree). For each object we look at the grid cells adjacent to the one that houses the object. Each grid cell gets a value assigned to it, and this value represents the force exerted on every object within the grid cell. The simulator now looks something like this:
+This means we can represent gravity by a sort of "nested grid," along the same lines as a [quadtree](https://en.wikipedia.org/wiki/Quadtree) or [octree](https://en.wikipedia.org/wiki/Octree). For each object we look at the grid cells adjacent to the one that houses the object. Each grid cell gets a value assigned to it, and this value represents the force exerted on every object within the grid cell. The simulator now looks something like this:
 
 	for every object in the universe:
 		for every level in the nested grid:
