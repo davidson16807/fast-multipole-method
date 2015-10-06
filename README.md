@@ -46,7 +46,7 @@ Let's say you want simulate the solar system in 2D. For starters, you'll want so
 
 `resolution` expresses the smallest distance considered by the model. It is the distance at which two particles become treated as one. `range` expresses the maximum distance considered by the model. It is the distance at which two particles can no longer interact with one another.
 
-What's `value_function`, you ask? `value_function` specifies the value at each point in the field. It accepts a 2D vector indicating the distance to a particle, and returns a 2D vector indicating the value. Here's what it looks like in our gravity simulator:
+What's `value_function`, you ask? `value_function` specifies the value at each point in the field. It accepts a 2D vector indicating the distance to a particle, and returns a 2D vector indicating the value. It can also accept an optional parameter expressing the properties of a particle, such as mass or charge. Here's what `value_function` looks like in our gravity simulator:
 
 	function value_function(offset, particle) { 
 		var distance = Math.sqrt( Math.pow(offset.x, 2) + Math.pow(offset.y, 2) );
@@ -61,3 +61,14 @@ What's `value_function`, you ask? `value_function` specifies the value at each p
 		return acceleration;
 	}
 
+Now we add objects to our simulation. 
+
+	field.add_particle([0,0], { mass: 1 * solar_mass });
+
+`add_particle()` accepts two parameters. The first expresses the location of the particle. You can use either an array of size two (e.g. `[0,0]`) or an object with `x` and `y` attributes (e.g. `{x: 0, y: 0}`). The second parameter is optional, and specifies any additional properties of the particle. 
+
+We are now ready to retrieve values from our gravity field. 
+
+	acceleration = field.value([1,1]);
+
+As with `add_particle()`, the `value()` method accepts a single parameter representing location. This can either be an array of size two (`[1,1]`) or an object with `x` and `y` attributes (e.g. `{x: 1, y: 1}`).
