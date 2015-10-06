@@ -38,7 +38,7 @@ Our new algorithm remains simple. For each object we look at the grid cells adja
 
 This is known as the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Our runtime scales linearly with the number of objects. It also scales logarithmically with the size of the simulation. Complexity is O(N log(M)), where N is the object count and and M is the simulation size. This is exactly what we want. 
 
-## How do I use it:
+## How do I use it?
 
 Let's say you want simulate the solar system in 2D. For starters, you'll want something to represent your gravity field: 
 

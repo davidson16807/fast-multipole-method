@@ -135,7 +135,7 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 						continue;
 					};
 
-					grid[child_key] = value_fn(offset(midpoint(child_), pos), options);
+					grid[child_key] = format_pos(value_fn(offset(midpoint(child_), pos), options));
 				};
 			};
 		};
@@ -363,7 +363,7 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 						continue;
 					};
 
-					grid[child_key] = value_fn(offset(midpoint(child_), pos), options);
+					grid[child_key] = format_pos(value_fn(offset(midpoint(child_), pos), options));
 				};
 			};
 		};
