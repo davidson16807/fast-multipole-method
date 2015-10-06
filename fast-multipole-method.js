@@ -32,6 +32,12 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 	var distance = function(u, v) {
 		return Math.sqrt(Math.pow(u.x - v.x , 2) + Math.pow(u.y - v.y, 2));
 	}
+	var offset = function(location, particle) {
+		return {
+			x: particle.x - location.x,
+			y: particle.y - location.y,
+		}
+	}
 	var parent = function(cell) {
 		return {
 			level: cell.level + 1,
@@ -129,7 +135,7 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 						continue;
 					};
 
-					grid[child_key] = value_fn(distance(midpoint(child_), pos), options);
+					grid[child_key] = value_fn(offset(midpoint(child_), pos), options);
 				};
 			};
 		};
@@ -244,6 +250,13 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 	var distance = function(u, v) {
 		return Math.sqrt(Math.pow(u.x - v.x , 2) + Math.pow(u.y - v.y, 2) + Math.pow(u.z - v.z, 2));
 	}
+	var offset = function(location, particle) {
+		return {
+			x: particle.x - location.x,
+			y: particle.y - location.y,
+			z: particle.z - location.z,
+		}
+	}
 	var parent = function(cell) {
 		return {
 			level: cell.level + 1,
@@ -350,7 +363,7 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 						continue;
 					};
 
-					grid[child_key] = value_fn(distance(midpoint(child_), pos), options);
+					grid[child_key] = value_fn(offset(midpoint(child_), pos), options);
 				};
 			};
 		};

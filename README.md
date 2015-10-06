@@ -27,7 +27,7 @@ The solution to our problem relies upon an observation. As you move further away
 
 So what if we had several grids, each with different cell size? As with our previous model, we'd only consider gravity within adjacent grid cells. However, because the grid cells come in different sizes, we can represent fields from any object, no matter how massive. And because gravity diminishes with distance, we don't have to worry about accuracy when the grid cells are large. 
 
-We can make these grid cells any size we want. If cell size scales geometrically, there's no limit to the size of our simulation, provided our grid is represented by a sparsely populated hash table. Let's say we have a series of nested grid cells where each cell is composed of two smaller subdivisions. It only takes [200](http://www.wolframalpha.com/input/?i=log2+%28+%28diameter+of+the+universe%29+%2F+%28planck+length%29+%29) such subdivisions before we can simulate the entire observable universe down to the resolution of a planck unit. This, of course, assumes our universe is very sparsely populated, perhaps by no more than a few million particles, but still, we've made our point. 
+We can make these grid cells any size we want. If cell size scales geometrically, there's no limit to the size of our simulation, provided our grid is represented by a sparsely populated hash table. Let's say we have a series of nested grid cells where each cell is composed of two smaller subdivisions. It only takes [200](http://www.wolframalpha.com/input/?i=log2+%28+%28diameter+of+the+universe%29+%2F+%28planck+length%29+%29) such subdivisions before we can simulate the entire observable universe down to the resolution of a planck unit. This, of course, assumes our universe is very sparsely populated, perhaps by no more than a few million particles. Still, we've made our point. 
 
 Our new algorithm remains simple. For each object we look at the grid cells adjacent to the one that houses the object. Each grid cell gets a value assigned to it, and this value represents the force exerted on every object within the grid cell. The simulator now looks something like this:
 
@@ -36,10 +36,28 @@ Our new algorithm remains simple. For each object we look at the grid cells adja
 			for every neighboring grid cell within the level:
 				calculate the force between the object and the midpoint of the grid cell
 
-This is known as the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Our runtime scales linearly with the number of objects, and logarithmically with the size of the simulation. Complexity is O(N log(M)), where N is the object count and and M is the simulation size. This is exactly what we want. 
+This is known as the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Our runtime scales linearly with the number of objects. It also scales logarithmically with the size of the simulation. Complexity is O(N log(M)), where N is the object count and and M is the simulation size. This is exactly what we want. 
 
 ## How do I use it:
 
-Let's say you want simulate the solar system in 2D. To start, you'll want something to represent your gravity field. This requires a 2D vector field where every point represents the acceleration experienced at a point.
+Let's say you want simulate the solar system in 2D. For starters, you'll want something to represent your gravity field: 
 
-And here's an example:
+	field = FMM.VectorField2(resolution, range, value_function);
+
+`resolution` expresses the smallest distance considered by the model. It is the distance at which two particles become treated as one. `range` expresses the maximum distance considered by the model. It is the distance at which two particles can no longer interact with one another.
+
+What's `value_function`, you ask? `value_function` specifies the value at each point in the field. It accepts a 2D vector indicating the distance to a particle, and returns a 2D vector indicating the value. Here's what it looks like in our gravity simulator:
+
+	function value_function(offset, particle) { 
+		var distance = Math.sqrt( Math.pow(offset.x, 2) + Math.pow(offset.y, 2) );
+		var normalized = {
+			x: offset.x / distance,
+			y: offset.y / distance,
+		};
+		var acceleration = {
+			x: normalized.x * gravitational_constant * particle.mass / Math.pow(distance, 2),
+			y: normalized.y * gravitational_constant * particle.mass / Math.pow(distance, 2),
+		}
+		return acceleration;
+	}
+
