@@ -2,7 +2,7 @@
 This is a javascript implementation for the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method)
 
 ## The problem
-Let's say you want simulate a solar system. You'll recall all objects in the universe effect one another through gravity, right? A naïve simulator might simulate this as follows:
+Let's say you want to simulate a solar system. You'll recall all objects in the universe effect one another through gravity, right? A naïve simulator might simulate this as follows:
 
     for every object in the universe:
     	for every other object in the universe:
