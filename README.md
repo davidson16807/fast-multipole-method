@@ -20,18 +20,18 @@ The "grid" we mention is an approximation for what physicists call a [field](htt
 
 Now I'm a bit of a smart-aleck, here. It's true the solution above scales well with the number of objects, but it doesn't scale well with the size of the grid. If I want to simulate a square universe that's 3 grid cells wide, I have to make 9 calculations for each object. If I want to simulate a universe that's 4 grid cells wide I have to make 16 calculations for each object. Again, things get out of hand quickly. What we really need is a simulation that scales well for both the number of objects *and* the size of the grid.
 
-Well, fine then, how about this. Gravity gets weaker with distance. Let's say we keep the grid, but we ignore any interaction where the objects don't occupy adjacent grid cells. This approach scales well in most circumstances, but it has some undesireable consequences. Gravity does get weaker with distance, but it never completely goes away. If we have a really massive object, that object will no longer be able to effect distant objects like it should.
+Well, fine then, how about this. Gravity gets weaker with distance, so let's say we keep the grid, but we ignore any interaction between objects that are further than a grid cell's width apart. This approach scales well, but it has some undesireable consequences. Gravity might get weaker with distance, but it never completely vanishes. If we have a really massive object, that object will no longer be able to effect distant objects like it should.
 
 ## The fast multipole method
 The solution we provide here relies upon an observation. As you move further away from an object, it becomes less important to model the force of gravity accurately. This is because gravity follows an [inverse square law](https://en.wikipedia.org/wiki/Inverse-square_law). The further you go, the less gravity you feel, and the less important it becomes to get the details right. The only thing that continues to matter is the order of magnitude. 
 
 An object that's very far away is best modeled using very large grid cells. Only a single value is stored per grid cell, so it's not likely this value will correctly represent the force of gravity all throughout its cell, but that's okay, because the object is far away and accuracy doesn't matter much. 
 
-Likewise, an object that's very close by can be modeled using very small grid cells. Using a small grid cell size is normally costly to performance, but that's okay, because we only consider adjacent grid cells. 
+Likewise, an object that's very close by can be modeled using very small grid cells. Using small grid cells is normally costly to performance, but that's okay, because we only consider adjacent grid cells. 
 
-So why can't we use both sizes? As a matter of fact, we can have a number of different cell sizes, each nested within one another. It becomes very easy this way to scale up our simulation. Let's say we have a series of nested grid cells. Each cell has a number of subdivisions, and each subdivision is half the width of its parent. It only takes [200](http://www.wolframalpha.com/input/?i=log2+%28+%28diameter+of+the+universe%29+%2F+%28planck+length%29+%29) such subdivisions before we can simulate the entire observable universe down to the resolution of a planck unit. Assuming we represent our grid with a sparsely populated hash table, we can easily implement this on modern hardware. 
+So why not use both sizes? As a matter of fact, we can have a number of different cell sizes, each nested within one another. It becomes very easy this way to scale up our simulation. Let's say we have a series of nested grid cells. Each cell has a number of subdivisions, and each subdivision is half the width of its parent. It only takes about [200](http://www.wolframalpha.com/input/?i=log2+%28+%28diameter+of+the+universe%29+%2F+%28planck+length%29+%29) such subdivisions before we can simulate the entire observable universe down to the resolution of a planck unit. Assuming we represent our grid with a sparsely populated hash table, we can easily implement this on modern hardware. 
 
-Naturally, our universe has to be very sparsely populated, but the simulation scales well with object count, too, so we can still simulate an impressive number of objects. A few million particles is relatively obtainable, assuming we don't mind the lag. 
+Naturally, our universe has to be very sparsely populated, but the simulation scales well with object count, too, so we can still simulate an impressive number of objects. It's totally possible to have a few million particles in our simulation, assuming we don't mind the lag. 
 
 The algorithm itself remains fairly simple. For each object we iterate through our nested grids and examine the grid cells that are adjacent to the one housing the object. Each grid cell gets a value assigned to it, and this value represents the force exerted on every object within the grid cell. The simulator now looks something like this:
 
@@ -40,7 +40,12 @@ The algorithm itself remains fairly simple. For each object we iterate through o
 			for every neighboring grid cell within the level:
 				calculate the force between the object and the midpoint of the grid cell
 
-This is known as the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Our runtime scales linearly with the number of objects. It also scales logarithmically with the size of the simulation. Complexity is O(N log(M)), where N is the object count and and M is the simulation size. This is exactly what we want. 
+And if we want to retrieve the value at a specific location, we do the following:
+
+	for every level in the nested grid:
+		find the grid cell that intersects with our location and add its value to a running total
+
+The solution here is known as the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Our runtime scales linearly with the number of objects. It also scales logarithmically with the size of the simulation. Complexity is O(N log(M)), where N is the object count and and M is the simulation size. This is exactly what we want. 
 
 ## How do I use it?
 
@@ -50,19 +55,19 @@ Let's say you want simulate the solar system in 2D. For starters, you'll want so
 
 `resolution` expresses the smallest distance considered by the model. It is the distance at which two particles become treated as one. `range` expresses the maximum distance considered by the model. It is the distance at which two particles can no longer interact with one another.
 
-What's `value_function`, you ask? `value_function` specifies the value at each point in the field. It accepts a 2D vector indicating the distance to a particle, and returns a 2D vector indicating the value. It can also accept an optional parameter expressing the properties of a particle, such as mass or charge. Here's what `value_function` looks like in our gravity simulator:
+What's `value_function`, you ask? `value_function` specifies the value at each point in the field. It accepts a 2D vector indicating the distance to a particle, and returns a 2D vector indicating the value at that distance. It can also accept an optional parameter expressing the properties of a particle, such as mass or charge. Here's what `value_function` looks like in our gravity simulator:
 
 	function value_function(offset, particle) { 
 		var distance = Math.sqrt( Math.pow(offset.x, 2) + Math.pow(offset.y, 2) );
+		var acceleration = gravitational_constant * particle.mass / Math.pow(distance, 2)
 		var normalized = {
 			x: offset.x / distance,
 			y: offset.y / distance,
 		};
-		var acceleration = {
-			x: normalized.x * gravitational_constant * particle.mass / Math.pow(distance, 2),
-			y: normalized.y * gravitational_constant * particle.mass / Math.pow(distance, 2),
+		return {
+			x: normalized.x * acceleration
+			y: normalized.y * acceleration,
 		}
-		return acceleration;
 	}
 
 Now we add objects to our simulation. 
