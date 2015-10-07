@@ -81,3 +81,21 @@ We are now ready to retrieve values from our gravity field.
 	acceleration = field.value([1,1]);
 
 As with `add_particle()`, the `value()` method accepts a single parameter representing location. This can either be an array of size two (`[1,1]`) or an object with `x` and `y` attributes (e.g. `{x: 1, y: 1}`).
+
+## Other fields
+
+You can create 2D scalar fields with a second class called `ScalarField2`.
+
+	scalarfield = FMM.ScalarField2(resolution, range, scalar_value_function);
+	
+There are also equivalent classes for representing 3D scalar fields, `ScalarField3` and `VectorField3`
+
+	scalarfield = FMM.ScalarField3(resolution, range, scalar_value_function);
+	vectorfield = FMM.VectorField3(resolution, range, vector_value_function);
+	
+If you do any work with [Three.js](http://threejs.org/), you can also try the equivalent classes available under the `THREE` namespace. 
+
+	vectorfield = THREE.VectorField2(resolution, range, vector2_value_function);
+	vectorfield = THREE.VectorField3(resolution, range, vector3_value_function);
+	
+Lastly, if you want to work with another type of class for vectors/scalars, you can try the generic `Field2` and `Field3` classes. These generics expose two additional function parameters, `add_function` and `remove_function`, which tell the library how to add or subtract the values within the field.
