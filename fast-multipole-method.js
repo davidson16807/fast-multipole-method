@@ -450,7 +450,10 @@ FMM.VectorField3 = function(resolution, range, value_fn) {
 
 THREE == THREE || {};
 THREE.VectorField2 = function (resolution, range, value_fn) {
-	return FMM.Field2(resolution, range, value_fn, 
+	return FMM.Field2(resolution, range, 
+		function(offset, particle) {
+			value_fn(new THREE.Vector2(offset.x, offset.y), particle);
+		},
 		function(u, v) {
 				return THREE.Vector2.addVectors( u, v );
 			},
@@ -460,7 +463,10 @@ THREE.VectorField2 = function (resolution, range, value_fn) {
 	);		
 }
 THREE.VectorField3 = function (resolution, range, value_fn) {
-	return FMM.Field3(resolution, range, value_fn, 
+	return FMM.Field3(resolution, range, 
+		function(offset, particle) {
+			value_fn(new THREE.Vector3(offset.x, offset.y, offset.z), particle);
+		},
 		function(u, v) {
 				return THREE.Vector3.addVectors( u, v );
 			},
