@@ -98,4 +98,15 @@ If you do any work with [Three.js](http://threejs.org/), you can also try the eq
 	vectorfield = THREE.VectorField2(resolution, range, vector2_value_function);
 	vectorfield = THREE.VectorField3(resolution, range, vector3_value_function);
 	
-Lastly, if you want to work with another type of class for vectors/scalars, you can try the generic `Field2` and `Field3` classes. These generics expose two additional function parameters, `add_function` and `remove_function`, which tell the library how to add or subtract the values within the field.
+Lastly, if you want to work with another type of class for vectors/scalars, you can try the generic `Field2` and `Field3` classes. These generics expose two additional function parameters, `add_function` and `remove_function`, which tell the library how to add or subtract the values within the field. Here's how `THREE.VectorField3` is implemented using `Field3`:
+
+	THREE.VectorField3 = function (resolution, range, value_fn) {
+		return FMM.Field3(resolution, range, value_fn, 
+			function(u, v) {
+					return THREE.Vector3.addVectors( u, v );
+				},
+			function(u, v) {
+					return THREE.Vector3.subVectors( u, v );
+			 	}
+		);	
+	}
