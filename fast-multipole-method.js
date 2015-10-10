@@ -134,7 +134,6 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 					if (excluded[child_key] !== void 0) {
 						continue;
 					};
-
 					grid[child_key] = format_pos(value_fn(offset(midpoint(child_), pos), options));
 				};
 			};
@@ -164,12 +163,16 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 		var cells_ = cells(pos);
 		for (var i = 0, li = cells_.length; i < li; i++) {
 			var cell_ = cells_[i];
-			console.log(cell_hash(cell_));
 			if (field[cell_hash(cell_)] === void 0) {
 				continue;
 			};
-			value += field[cell_hash(cell_)];
+			if (value !== void 0) {
+				value = field[cell_hash(cell_)];
+				continue;
+			};
+			value = add_fn(field[cell_hash(cell_)], value);
 		};
+		console.log(value);
 		return value;
 	}
 
@@ -388,15 +391,18 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 		return sum;
 	}
 	var get_value = function(field, pos){
-		var value = 0;
+		var value = void 0;
 		var cells_ = cells(pos);
 		for (var i = 0, li = cells_.length; i < li; i++) {
 			var cell_ = cells_[i];
-			console.log(cell_hash(cell_));
 			if (field[cell_hash(cell_)] === void 0) {
 				continue;
 			};
-			value += field[cell_hash(cell_)];
+			if (value === void 0) {
+				value = field[cell_hash(cell_)];
+				continue;
+			};
+			value = add_fn(field[cell_hash(cell_)], value);
 		};
 		return value;
 	}
@@ -404,7 +410,8 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 	this_ = {};
 	this_._grid = {};
 	this_.value = function (pos) {
-		return get_value(this_._grid, format_pos(pos));
+		var value = get_value(this_._grid, format_pos(pos));
+		return value;
 	}
 	this_.add_field = function(field) {
 		this_._grid = add_field_grids(this_._grid, field._grid, add_fn);
@@ -452,8 +459,8 @@ THREE == THREE || {};
 THREE.VectorField2 = function (resolution, range, value_fn) {
 	return FMM.Field2(resolution, range, 
 		function(offset, particle) {
-			value_fn(new THREE.Vector2(offset.x, offset.y), particle);
-		},
+				return value_fn(new THREE.Vector2(offset.x, offset.y), particle);
+			},
 		function(u, v) {
 				return THREE.Vector2.addVectors( u, v );
 			},
@@ -465,13 +472,13 @@ THREE.VectorField2 = function (resolution, range, value_fn) {
 THREE.VectorField3 = function (resolution, range, value_fn) {
 	return FMM.Field3(resolution, range, 
 		function(offset, particle) {
-			value_fn(new THREE.Vector3(offset.x, offset.y, offset.z), particle);
+			return value_fn(new THREE.Vector3(offset.x, offset.y, offset.z), particle);
 		},
 		function(u, v) {
-				return THREE.Vector3.addVectors( u, v );
+				return new THREE.Vector3().addVectors( u, v );
 			},
 		function(u, v) {
-				return THREE.Vector3.subVectors( u, v );
+				return new THREE.Vector3().subVectors( u, v );
 		 	}
 	);	
 }
