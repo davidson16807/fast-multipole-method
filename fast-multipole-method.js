@@ -141,22 +141,14 @@ FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 		return grid;
 	}
 	var add_field_grids = function(field1, field2, add_fn) {
-
-		var sum = {};
-		for(var cell_key in field1){
-			sum[cell_key] = field1[cell_key];
-		}
-
 		for(var cell_key in field2){
 			if (field1[cell_key] === void 0) {
-				sum[cell_key] = field2[cell_key];
+				field1[cell_key] = field2[cell_key];
 				continue;
 			};
 
-			sum[cell_key] = add_fn(field1[cell_key], field2[cell_key]);
+			field1[cell_key] = add_fn(field1[cell_key], field2[cell_key]);
 		}
-
-		return sum;
 	}
 	var get_value = function(field, pos){
 		var value = 0;
@@ -373,22 +365,14 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 		return grid;
 	}
 	var add_field_grids = function(field1, field2, add_fn) {
-
-		var sum = {};
-		for(var cell_key in field1){
-			sum[cell_key] = field1[cell_key];
-		}
-
 		for(var cell_key in field2){
 			if (field1[cell_key] === void 0) {
-				sum[cell_key] = field2[cell_key];
+				field1[cell_key] = field2[cell_key];
 				continue;
 			};
 
-			sum[cell_key] = add_fn(field1[cell_key], field2[cell_key]);
+			field1[cell_key] = add_fn(field1[cell_key], field2[cell_key]);
 		}
-
-		return sum;
 	}
 	var get_value = function(field, pos){
 		var value = void 0;
@@ -414,18 +398,18 @@ FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
 		return value;
 	}
 	this_.add_field = function(field) {
-		this_._grid = add_field_grids(this_._grid, field._grid, add_fn);
+		add_field_grids(this_._grid, field._grid, add_fn);
 	}
 	this_.remove_field = function(field) {
-		this_._grid = add_field_grids(this_._grid, field._grid, remove_fn);
+		add_field_grids(this_._grid, field._grid, remove_fn);
 	}
 	this_.add_particle = function(pos, options) {
 		options = options || {};
-		this_._grid = add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), add_fn);
+		add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), add_fn);
 	}
 	this_.remove_particle = function(pos, options) {
 		options = options || {};
-		this_._grid = add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), remove_fn);
+		add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), remove_fn);
 	}
 	return this_;
 }

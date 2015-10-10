@@ -74,25 +74,25 @@
 	    });
 
 	    var earth_mass = 1e24; //kg
-	    var earth_speed = 29800 // m / s
+	    var earth_speed = 0; // m / s
 	    var astronomical_unit = 1e11; //m
 	    var gravitational_constant = 6.67e-11; //m/s^2 m^2 / kg^2
 	    var gravity_field = THREE.VectorField3(astronomical_unit/100, 10*astronomical_unit, 
 	    	function value_function(offset, particle) { 
 	    	    var distance = offset.length();
-	    	    var acceleration = gravitational_constant * particle.mass / Math.pow(distance, 2)
-	    	    return offset.setLength(-acceleration);
+	    	    var acceleration = gravitational_constant * particle.mass / Math.pow(distance, 2);
+	    	    return offset.setLength(acceleration);
 	    	}
 	    );
 
 	    var particles = [];
-	    for (var i = 0; i < 10; i++) {
+	    for (var i = 0; i < 50; i++) {
 	    	particle = {
 	    		mass: 		Math.random() * earth_mass,
 	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * astronomical_unit ,
-	    						(Math.random() - 1/2) * astronomical_unit ,
-	    						(Math.random() - 1/2) * astronomical_unit ),
+	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
+	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
+	    						(Math.random() - 1/2) * astronomical_unit / 10 ),
 	    		velocity: 	new THREE.Vector3(
 	    						(Math.random() - 1/2) * earth_speed,
 	    						(Math.random() - 1/2) * earth_speed,
@@ -138,8 +138,8 @@
 			scene = new THREE.Scene();
 
 			// put a camera in the scene
-			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000 );
-			camera.position.set(0, 0, 5);
+			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 10000 );
+			camera.position.set(0, 0, 2);
 			scene.add(camera);
 
 			// create a camera contol
