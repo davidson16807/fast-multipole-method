@@ -93,7 +93,7 @@ There are also equivalent classes for representing 3D scalar fields, `ScalarFiel
 	scalarfield = FMM.ScalarField3(resolution, range, scalar_value_function);
 	vectorfield = FMM.VectorField3(resolution, range, vector_value_function);
 	
-If you do any work with [Three.js](http://threejs.org/), you can also try the equivalent classes available under the `THREE` namespace. 
+If you do any work with [Three.js](http://threejs.org/), you can also try the equivalent classes available under the `THREE` namespace. These classes operate in the exact same manner, but utilize the `THREE.Vector2` and `THREE.Vector3` classes that are provided by Three.js.
 
 	vectorfield = THREE.VectorField2(resolution, range, vector2_value_function);
 	vectorfield = THREE.VectorField3(resolution, range, vector3_value_function);
