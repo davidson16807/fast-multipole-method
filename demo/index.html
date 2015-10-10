@@ -74,7 +74,7 @@
 	    });
 
 	    var earth_mass = 1e24; //kg
-	    var earth_speed = 0; // m / s
+	    var moon_speed = 1000; // m / s
 	    var astronomical_unit = 1e11; //m
 	    var gravitational_constant = 6.67e-11; //m/s^2 m^2 / kg^2
 	    var gravity_field = THREE.VectorField3(astronomical_unit/100, 10*astronomical_unit, 
@@ -94,9 +94,9 @@
 	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
 	    						(Math.random() - 1/2) * astronomical_unit / 10 ),
 	    		velocity: 	new THREE.Vector3(
-	    						(Math.random() - 1/2) * earth_speed,
-	    						(Math.random() - 1/2) * earth_speed,
-	    						(Math.random() - 1/2) * earth_speed ),
+	    						(Math.random() - 1/2) * moon_speed,
+	    						(Math.random() - 1/2) * moon_speed,
+	    						(Math.random() - 1/2) * moon_speed ),
 	    	};
 	    	gravity_field.add_particle(particle.pos, particle);
 
@@ -139,7 +139,7 @@
 
 			// put a camera in the scene
 			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 10000 );
-			camera.position.set(0, 0, 2);
+			camera.position.set(0, 0, 1/2);
 			scene.add(camera);
 
 			// create a camera contol
@@ -181,7 +181,7 @@
 				seconds = 1;
 			}
 			
-			var timestep = seconds * 60*60*24*5;
+			var timestep = seconds * 60*60*24*15;
 			Time += timestep;
 
 			console.log('done')
