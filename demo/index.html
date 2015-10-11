@@ -74,7 +74,7 @@
 	    });
 
 	    var earth_mass = 1e24; //kg
-	    var moon_speed = 1000; // m / s
+	    var moon_speed = 0; // m / s
 	    var astronomical_unit = 1e11; //m
 	    var gravitational_constant = 6.67e-11; //m/s^2 m^2 / kg^2
 	    var gravity_field = THREE.VectorField3(astronomical_unit/100, 10*astronomical_unit, 
@@ -86,7 +86,7 @@
 	    );
 
 	    var particles = [];
-	    for (var i = 0; i < 50; i++) {
+	    for (var i = 0; i < 200; i++) {
 	    	particle = {
 	    		mass: 		Math.random() * earth_mass,
 	    		pos: 		new THREE.Vector3(
@@ -108,9 +108,6 @@
 		// particleShader.attributes.mass.needsUpdate = true;
 		var particleSystem = new THREE.ParticleSystem(particleGeometry, particleShader);
 		// vectorField.visible = false;
-		var MegaYearsPerSecond = 20;
-		var Paused = true;
-		var Time = 0;
 
 		if( !init() ){
 			animate();
@@ -180,22 +177,18 @@
 			if (seconds > 1){
 				seconds = 1;
 			}
-			
-			var timestep = seconds * 60*60*24*15;
-			Time += timestep;
 
-			console.log('done')
-
-
-			for (var i = 0; i < particles.length; i++) {
+			gravity_field.clear();
+			for (var i = 0, li = particles.length; i < li; i++) {
 				var particle = particles[i];
-				gravity_field.remove_particle(particle.pos, particle);
 				gravity_field.add_particle(particle.pos, particle);
 			};
-			for (var i = 0; i < particles.length; i++) {
+			
+			var timestep = seconds * 60*60*24*15;
+			for (var i = 0, li = particles.length; i < li; i++) {
 				var particle = particles[i];
-				var acceleration = gravity_field.value(particle.pos).multiplyScalar(timestep);
-				particle.velocity.add(acceleration);
+				var acceleration = gravity_field.value(particle.pos) || new THREE.Vector3();
+				particle.velocity.add(acceleration.multiplyScalar(timestep));
 				particle.pos.add(particle.velocity.clone().multiplyScalar(timestep));
 				particleGeometry.vertices[i] = particle.pos.clone().multiplyScalar(1/astronomical_unit);
 			};

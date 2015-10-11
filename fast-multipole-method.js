@@ -30,7 +30,7 @@ FMM = (function() {
 		var max_level = range ? Math.floor(Math.log(range) / Math.log(2)) : 0;
 
 		var cell_hash = function(cell_) {
-			return JSON.stringify([cell_.level, cell_.x, cell_.y]);
+			return cell_.level + ',' + cell_.x + ',' + cell_.y;
 		};
 		var format_pos = function(pos) {
 			if (pos.x !== void 0 && pos.y !== void 0) {
@@ -232,7 +232,7 @@ FMM = (function() {
 		var max_level = range ? Math.floor(Math.log(range) / Math.log(2)) : 0;
 
 		var cell_hash = function(cell_) {
-			return JSON.stringify([cell_.level, cell_.x, cell_.y, cell_.z]);
+			return cell_.level + ',' + cell_.x + ',' + cell_.y + ',' + cell_.z;
 		};
 		var format_pos = function(pos) {
 			if (pos.x !== void 0 && pos.y !== void 0 && pos.z !== void 0) {
@@ -336,9 +336,8 @@ FMM = (function() {
 			};
 			return vicinities_;
 		}
-		// returns a field comprised of a single particle
-		var monopole_field_grid = function(pos, options, value_fn) {
-			var grid = {};
+		// adds to grid the effect of a single particle
+		var add_monopole_field_grid = function(grid, pos, options, value_fn, add_fn) {
 			var cell_ = cell(pos, min_level);
 			var vicinities_ = vicinities(pos);
 			var excluded = {};
@@ -360,12 +359,28 @@ FMM = (function() {
 							continue;
 						};
 
-						grid[child_key] = format_pos(value_fn(offset(midpoint(child_), pos), options));
+						var child_value = format_pos(value_fn(offset(midpoint(child_), pos), options));
+						if (grid[child_key] === void 0) {
+							grid[child_key] = child_value;
+							continue;
+						};
+						grid[child_key] = add_fn(grid[child_key], child_value);
 					};
 				};
 			};
-			return grid;
 		}
+
+		var add_field_grids = function(grid, field2, add_fn) {
+			for(var cell_key in field2){
+				if (grid[cell_key] === void 0) {
+					grid[cell_key] = field2[cell_key];
+					continue;
+				};
+
+				grid[cell_key] = add_fn(grid[cell_key], field2[cell_key]);
+			}
+		}
+
 		var get_value = function(field, pos){
 			var value = void 0;
 			var cells_ = cells(pos);
@@ -389,6 +404,9 @@ FMM = (function() {
 			var value = get_value(this_._grid, format_pos(pos));
 			return value;
 		}
+		this_.clear = function () {
+			this_._grid = {};
+		}
 		this_.add_field = function(field) {
 			add_field_grids(this_._grid, field._grid, add_fn);
 		}
@@ -397,11 +415,11 @@ FMM = (function() {
 		}
 		this_.add_particle = function(pos, options) {
 			options = options || {};
-			add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), add_fn);
+			add_monopole_field_grid(this_._grid, format_pos(pos), options, value_fn, add_fn);
 		}
 		this_.remove_particle = function(pos, options) {
 			options = options || {};
-			add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), remove_fn);
+			add_monopole_field_grid(this_._grid, format_pos(pos), options, value_fn, remove_fn);
 		}
 		return this_;
 	}
