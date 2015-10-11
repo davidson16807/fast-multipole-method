@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Field Calculator</title>
+
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<script src="http://code.jquery.com/jquery.min.js"></script>
+
+		<script src="vendor/three.js/Three.js"></script>
+		<script src="vendor/three.js/Detector.js"></script>
+		<script src="vendor/three.js/OrbitControls.js"></script>
+		<script src="vendor/three.js/Stats.js"></script>
+
+		<script src="vendor/threex/THREEx.screenshot.js"></script>
+		<script src="vendor/threex/THREEx.WindowResize.js"></script>
+		<script src="vendor/threex.dragpancontrols.js"></script>
+		<script src="vendor/threex/THREEx.Debug.js"></script>
+		<script src="../fast-multipole-method.js"></script>
+
+		<link  href="styles/main.css" rel="stylesheet"/>
+	</head>
+<body>
+	<!-- three.js container -->
+	<div id="container"></div>
+	<div class="header">
+		<h1 class="title">
+		</h1>
+	</div>
+	<!-- info on screen display -->
+
+	<div class="bottom left">
+		<div id="renderStats"></div>
+	</div>
+
+	<div id="about-section" class="hidden details">
+	</div>
+
+	<div id="credits-section" class="hidden details">
+	</div>
+	</div>
+	<div class="side-bar">
+	</div>
+    <script type="x-shader/x-vertex" id="particle-vertex-shader">
+		varying vec3 vPosition;
+		varying float vCharge;
+		attribute float charge;
+
+		void main() {
+			vPosition = position;
+			vCharge = charge;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+			gl_PointSize = 5.;
+		}
+    </script>
+    <script type="x-shader/x-fragment" id="particle-fragment-shader">
+        varying vec3 vPosition;
+        varying float vCharge;
+
+        void main() {
+            gl_FragColor = vCharge > 0.? vec4(0,1,0,1) : vec4(1,0,0,1);
+        }
+    </script> 
+	
+	<script type="text/javascript">
+		var scene, renderer, composer, clock;
+		var camera, cameraControl;
+	    var image = document.createElement( 'img' );
+		var renderStats;
+
+		var particleGeometry	= new THREE.Geometry();
+	    var particleShader = new THREE.ShaderMaterial({
+	        vertexShader: $('#particle-vertex-shader').text(),
+	        fragmentShader: $('#particle-fragment-shader').text(),
+	        attributes: {
+	        	charge:{
+	        		type: 'f',
+	        		value: []
+	        	}
+	        },
+	        uniforms: {}
+	    });
+
+	    var electric_field = THREE.VectorField3(1/100, 10, 
+	    	function value_function(offset, particle) { 
+	    	    var distance = offset.length();
+	    	    var force_per_charge = (1 / 4*Math.PI) * particle.charge / Math.pow(distance, 2);
+	    	    return offset.setLength(force_per_charge);
+	    	}
+	    );
+
+	    var particles = [];
+	    var charge_attributes = particleShader.attributes.charge;
+	    for (var i = 0; i < 50; i++) {
+	    	particle = {
+	    		charge: 		Math.sign(i - 25),
+	    		pos: 		new THREE.Vector3(
+	    						(Math.random() - 1/2) * 1 ,
+	    						(Math.random() - 1/2) * 1 ,
+	    						(Math.random() - 1/2) * 1 ),
+	    		velocity: 	new THREE.Vector3(
+	    						(Math.random() - 1/2) * 0,
+	    						(Math.random() - 1/2) * 0,
+	    						(Math.random() - 1/2) * 0 ),
+	    	};
+	    	particleGeometry.vertices.push(particle.pos.clone());
+
+	    	particles[i] = particle;
+	    	charge_attributes.value[i] = particle.charge;
+	    };
+	    charge_attributes.needsUpdate = true;
+
+		// particleShader.attributes.charge.needsUpdate = true;
+		var particleSystem = new THREE.ParticleSystem(particleGeometry, particleShader);
+		// vectorField.visible = false;
+
+		if( !init() ){
+			animate();
+		}
+		
+		// init the scene
+		function init(){
+			clock = new THREE.Clock();
+
+			if( Detector.webgl ){
+				renderer = new THREE.WebGLRenderer({
+					antialias		: true,	// to get smoother output
+					preserveDrawingBuffer	: true	// to allow screenshot
+				});
+				renderer.setClearColor( 0x000000 );
+			}else{
+				Detector.addGetWebGLMessage();
+				return true;
+			}
+			var container = $("#container").get(0);
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			$("#container").get(0).appendChild(renderer.domElement);
+
+			renderStats = new Stats();
+			$('#renderStats').append( renderStats.domElement );
+
+			// create a scene
+			scene = new THREE.Scene();
+
+			// put a camera in the scene
+			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 10000 );
+			camera.position.set(0, 0, 10);
+			scene.add(camera);
+
+			// create a camera contol
+			cameraControls	= new THREE.OrbitControls( camera, $("#container").get(0) );
+			cameraControls.noPan = false;
+			
+			// transparently support window resize
+			THREEx.WindowResize.bind(renderer, camera);
+			// allow 'p' to make screenshot
+			// THREEx.Screenshot.bindKey(renderer);
+
+			// here you add your objects
+			// - you will most likely replace this part by your own
+			var light	= new THREE.AmbientLight(  0xffffff );
+			scene.add( light );
+			scene.add( particleSystem );
+			// scene.add( vectorField );
+		}
+
+		// animation loop
+		function animate() {
+
+			// loop on request animation loop
+			// - it has to be at the begining of the function
+			// - see details at http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+			requestAnimationFrame( animate );
+
+			// update camera controls
+			cameraControls.update();
+
+			// actually render the scene
+			renderer.render( scene, camera );
+
+			renderStats.update();
+
+			var seconds = clock.getDelta();
+			if (seconds > 1){
+				seconds = 1;
+			}
+
+
+			electric_field.clear();
+			for (var i = 0, li = particles.length; i < li; i++) {
+				var particle = particles[i];
+				electric_field.add_particle(particle.pos, particle);
+			};
+
+			var timestep = seconds * 1/10;
+			for (var i = 0, li = particles.length; i < li; i++) {
+				var particle = particles[i];
+				var force_per_charge = electric_field.value(particle.pos) || new THREE.Vector3();
+				particle.velocity.add(force_per_charge.multiplyScalar(-1 * timestep * particle.charge));
+				particle.pos.add(particle.velocity.clone().multiplyScalar(timestep));
+				particleGeometry.vertices[i] = particle.pos.clone().multiplyScalar(1);
+			};
+			particleGeometry.verticesNeedUpdate = true;
+		}
+
+	</script>
+</body>
+</html>
