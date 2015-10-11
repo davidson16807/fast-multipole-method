@@ -1,0 +1,22 @@
+body {
+	overflow	: hidden;
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
+}
+
+.top {
+	position	: fixed;
+	top		    : 1em;
+}
+.bottom {
+	position	: fixed;
+	bottom		: 1em;
+}
+.left {
+	position	: fixed;
+	left		: 1em;
+}
+.right {
+	position	: fixed;
+	right		: 1em;
+}

@@ -11,6 +11,7 @@
 		<script src="vendor/three.js/Three.js"></script>
 		<script src="vendor/three.js/Detector.js"></script>
 		<script src="vendor/three.js/OrbitControls.js"></script>
+		<script src="vendor/three.js/Stats.js"></script>
 
 		<script src="vendor/threex/THREEx.screenshot.js"></script>
 		<script src="vendor/threex/THREEx.WindowResize.js"></script>
@@ -18,7 +19,7 @@
 		<script src="vendor/threex/THREEx.Debug.js"></script>
 		<script src="../fast-multipole-method.js"></script>
 
-		<link  href="css/main.css" rel="stylesheet"/>
+		<link  href="styles/main.css" rel="stylesheet"/>
 	</head>
 <body>
 	<!-- three.js container -->
@@ -28,6 +29,10 @@
 		</h1>
 	</div>
 	<!-- info on screen display -->
+
+	<div class="bottom left">
+		<div id="renderStats"></div>
+	</div>
 
 	<div id="about-section" class="hidden details">
 	</div>
@@ -39,13 +44,15 @@
 	</div>
     <script type="x-shader/x-vertex" id="particle-vertex-shader">
 		varying vec3 vPosition;
+		attribute float mass;
+	    const float earth_mass = 1e24; //kg
 
 		//USER_INPUT_GOES_HERE
 
 		void main() {
 			vPosition = position;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
-			gl_PointSize = 10.;
+			gl_PointSize = 8. * mass / earth_mass;
 		}
     </script>
     <script type="x-shader/x-fragment" id="particle-fragment-shader">
@@ -64,12 +71,18 @@
 		var scene, renderer, composer, clock;
 		var camera, cameraControl;
 	    var image = document.createElement( 'img' );
+		var renderStats;
 
 		var particleGeometry	= new THREE.Geometry();
 	    var particleShader = new THREE.ShaderMaterial({
 	        vertexShader: $('#particle-vertex-shader').text(),
 	        fragmentShader: $('#particle-fragment-shader').text(),
-	        attributes: {},
+	        attributes: {
+	        	mass:{
+	        		type: 'f',
+	        		value: []
+	        	}
+	        },
 	        uniforms: {}
 	    });
 
@@ -86,6 +99,7 @@
 	    );
 
 	    var particles = [];
+	    var mass_attributes = particleShader.attributes.mass;
 	    for (var i = 0; i < 200; i++) {
 	    	particle = {
 	    		mass: 		Math.random() * earth_mass,
@@ -103,7 +117,9 @@
 	    	particleGeometry.vertices.push(particle.pos.clone().multiplyScalar(1/astronomical_unit));
 
 	    	particles[i] = particle;
+	    	mass_attributes.value[i] = particle.mass;
 	    };
+	    mass_attributes.needsUpdate = true;
 
 		// particleShader.attributes.mass.needsUpdate = true;
 		var particleSystem = new THREE.ParticleSystem(particleGeometry, particleShader);
@@ -130,6 +146,9 @@
 			var container = $("#container").get(0);
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			$("#container").get(0).appendChild(renderer.domElement);
+
+			renderStats = new Stats();
+			$('#renderStats').append( renderStats.domElement );
 
 			// create a scene
 			scene = new THREE.Scene();
@@ -163,15 +182,13 @@
 			// - see details at http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 			requestAnimationFrame( animate );
 
-			// variable which is increase by Math.PI every seconds - usefull for animation
-			var PIseconds	= Date.now() * Math.PI;
-
 			// update camera controls
 			cameraControls.update();
 
 			// actually render the scene
 			renderer.render( scene, camera );
 
+			renderStats.update();
 
 			var seconds = clock.getDelta();
 			if (seconds > 1){
@@ -183,7 +200,7 @@
 				var particle = particles[i];
 				gravity_field.add_particle(particle.pos, particle);
 			};
-			
+
 			var timestep = seconds * 60*60*24*15;
 			for (var i = 0, li = particles.length; i < li; i++) {
 				var particle = particles[i];
