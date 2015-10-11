@@ -160,7 +160,8 @@
 
 			// create a camera contol
 			cameraControls	= new THREE.OrbitControls( camera, $("#container").get(0) );
-
+			cameraControls.noPan = false;
+			
 			// transparently support window resize
 			THREEx.WindowResize.bind(renderer, camera);
 			// allow 'p' to make screenshot
