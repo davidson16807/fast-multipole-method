@@ -92,17 +92,18 @@
 
 	    var particles = [];
 	    var charge_attributes = particleShader.attributes.charge;
-	    for (var i = 0; i < 50; i++) {
+	    for (var i = 0; i < 200; i++) {
 	    	particle = {
-	    		charge: 		Math.sign(i - 25),
+	    		charge: 		i%3 == 0? 1 : -1,
+	    		mass: 			i%3 == 0? 1836 : 1,
 	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * 1 ,
-	    						(Math.random() - 1/2) * 1 ,
-	    						(Math.random() - 1/2) * 1 ),
+	    						(Math.random() - 1/2) * 3,
+	    						(Math.random() - 1/2) * 3,
+	    						(Math.random() - 1/2) * 3),
 	    		velocity: 	new THREE.Vector3(
-	    						(Math.random() - 1/2) * 0,
-	    						(Math.random() - 1/2) * 0,
-	    						(Math.random() - 1/2) * 0 ),
+	    						(Math.random() - 1/2) *0,
+	    						(Math.random() - 1/2) *0,
+	    						(Math.random() - 1/2) *0 ),
 	    	};
 	    	particleGeometry.vertices.push(particle.pos.clone());
 
@@ -197,7 +198,9 @@
 			for (var i = 0, li = particles.length; i < li; i++) {
 				var particle = particles[i];
 				var force_per_charge = electric_field.value(particle.pos) || new THREE.Vector3();
-				particle.velocity.add(force_per_charge.multiplyScalar(-1 * timestep * particle.charge));
+				var force = force_per_charge.multiplyScalar(-1 * timestep * particle.charge);
+				var acceleration = force.multiplyScalar(1/particle.mass);
+				particle.velocity.add(acceleration);
 				particle.pos.add(particle.velocity.clone().multiplyScalar(timestep));
 				particleGeometry.vertices[i] = particle.pos.clone().multiplyScalar(1);
 			};
