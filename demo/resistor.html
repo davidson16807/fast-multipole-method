@@ -92,53 +92,74 @@
 
 	    var particles = [];
 	    var charge_attributes = particleShader.attributes.charge;
-	    for (var i = 0; i < 300; i++) {
-	    	particle = i%3 == 0?
-	    	//wire core charges
-	    	{
-	    		charge: 		29-18,
-	    		mass: 			2*29*1836,
-	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * 1,
-	    						(Math.random() - 0/2) * 3,
-	    						(Math.random() - 1/2) * 1),
-	    		velocity: 	new THREE.Vector3(
-	    						(Math.random() - 1/2) *0,
-	    						(Math.random() - 1/2) *0,
-	    						(Math.random() - 1/2) *0 ),
-	    	}
-	    	: particle = i%3 == 1?
-	    	//resistor core charges
-	    	{
-	    		charge: 		29-18,
-	    		mass: 			2*29*1836,
-	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * 0.5,
-	    						(Math.random() - 0/2) * 3 + 3,
-	    						(Math.random() - 1/2) * 0.5),
-	    		velocity: 	new THREE.Vector3(
-	    						(Math.random() - 1/2) *0,
-	    						(Math.random() - 1/2) *0,
-	    						(Math.random() - 1/2) *0 ),
-	    	}
-	    	://wire valence electron
-	    	{
+	    var separation = 1; //Ångström 
+	    var particle_i = 0;
+	    
+    	//wire core charges
+    	var wire_width  = 5;
+    	var wire_length = 4;
+	    for (var i = 0; i < wire_width; i++) {
+	    	for (var j = 0; j < wire_width; j++) {
+	    		for (var k = 0; k < wire_length; k++) {
+			    	particle = {
+			    		charge: 		29-18,
+			    		mass: 			2*29*1836,
+			    		pos: 		new THREE.Vector3(
+			    						separation * i - wire_width/2,
+			    						separation * k,
+			    						separation * j - wire_width/2),
+			    		velocity: 	new THREE.Vector3(0, 0, 0),
+			    	};
+			    	particleGeometry.vertices.push(particle.pos.clone());
+			    	particles[particle_i] = particle;
+			    	charge_attributes.value[particle_i] = particle.charge;
+			    	particle_i++;
+	    		};
+	    	};
+	    };
+	    
+	    //resistor core charges
+	    var resistor_width = 3;
+	    var resistor_length = 4;
+	    for (var i = 0; i < resistor_width; i++) {
+	    	for (var j = 0; j < resistor_width; j++) {
+	    		for (var k = 0; k < resistor_length; k++) {
+			    	particle = {
+			    		charge: 		29-18,
+			    		mass: 			2*29*1836,
+			    		pos: 		new THREE.Vector3(
+			    						separation * i - resistor_width/2,
+			    						separation * k + wire_length,
+			    						separation * j - resistor_width/2),
+			    		velocity: 	new THREE.Vector3(0, 0, 0),
+			    	};
+			    	particleGeometry.vertices.push(particle.pos.clone());
+			    	particles[particle_i] = particle;
+			    	charge_attributes.value[particle_i] = particle.charge;
+			    	particle_i++;
+	    		};
+	    	};
+	    };
+	    
+    	//wire valence electron
+    	var electron_count = particle_i;
+	    for (var i = 0; i < electron_count; i++) {
+	    	particle = {
 	    		charge: 		-1,
 	    		mass: 			1,
 	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * 1,
-	    						(Math.random() - 0/2) * 3,
-	    						(Math.random() - 1/2) * 1),
+	    						(Math.random() - 1/2) * wire_width,
+	    						(Math.random() - 0/2) * wire_length/2,
+	    						(Math.random() - 1/2) * wire_width),
 	    		velocity: 	new THREE.Vector3(
 	    						(Math.random() - 1/2) *0,
 	    						(Math.random() - 1/2) *0,
 	    						(Math.random() - 1/2) *0 ),
-	    	}
-	    	;
+	    	};
 	    	particleGeometry.vertices.push(particle.pos.clone());
-
-	    	particles[i] = particle;
-	    	charge_attributes.value[i] = particle.charge;
+	    	particles[particle_i] = particle;
+	    	charge_attributes.value[particle_i] = particle.charge;
+	    	particle_i++;
 	    };
 	    charge_attributes.needsUpdate = true;
 
