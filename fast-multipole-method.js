@@ -15,7 +15,7 @@ var FMM = (function() {
 	}
 	
 	// Field2
-	// A class representing 2D mathmatical fields using the fast multipole method. 
+	// A class representing 2D mathematical fields using the fast multipole method. 
 	// Any data type can be used to describe point values in the field, 
 	// provided appropriate values are given for  add_fn and remove_fn 
 	// If add_fn and remove_fn are not defined, the field must operate on scalar numbers
@@ -218,7 +218,7 @@ var FMM = (function() {
 	}
 
 	// Field3
-	// A class representing 2D mathmatical fields using the fast multipole method. 
+	// A class representing 3D mathematical fields using the fast multipole method. 
 	// Any data type can be used to describe point values in the field, 
 	// provided appropriate values are given for  add_fn and remove_fn 
 	// If add_fn and remove_fn are not defined, the field must operate on scalar numbers

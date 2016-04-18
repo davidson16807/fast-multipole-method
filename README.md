@@ -1,5 +1,5 @@
 # fast-multipole-method.js
-This is a javascript implementation for the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method)
+This is a javascript implementation for the [fast multipole method](https://en.wikipedia.org/wiki/Fast_multipole_method). Classes exist for both 2D and 3D simulations. A subset of classes allow you to work easily with Vector2 and Vector3 objects in Three.js. Otherwise, you can work with any object that has x and y attributes, or alternatively, you can work with lists of size 2 or 3.
 
 ## The problem
 Let's say you want to simulate a solar system. You'll recall all objects in the universe effect one another through gravity, right? A naïve simulator might simulate this as follows:
