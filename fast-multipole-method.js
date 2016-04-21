@@ -15,7 +15,7 @@ var FMM = (function() {
 	}
 	
 	// Field2
-	// A class representing 2D mathematical fields using the fast multipole method. 
+	// A class representing 2D mathmatical fields using the fast multipole method. 
 	// Any data type can be used to describe point values in the field, 
 	// provided appropriate values are given for  add_fn and remove_fn 
 	// If add_fn and remove_fn are not defined, the field must operate on scalar numbers
@@ -28,38 +28,45 @@ var FMM = (function() {
 	// 					e.g. function(distance) { return 1/Math.pow(distance,2) }
 	FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
 
+		function Cell (level, x,y) {
+			return { level: level, x: x, y: y };
+		}
+		function Point (x,y,z) {
+			return { x:x, y:y };
+		}
+
 		var min_level = resolution ? Math.floor(Math.log(resolution) / Math.log(2)) : 0;
 		var max_level = range ? Math.floor(Math.log(range) / Math.log(2)) : 0;
 
-		var cell_hash = function(cell_) {
-			return cell_.level + ',' + cell_.x + ',' + cell_.y;
+		function cell_hash (cell_) {
+			return cell_.level + ',' + cell_.x + ',' + cell_.y ;
 		};
-		var format_pos = function(pos) {
+		function format_pos (pos) {
 			if (pos.x !== void 0 && pos.y !== void 0) {
 				return pos;
 			};
-			return {
-				x: pos[0],
-				y: pos[1],
-			}
+			return Point(
+				pos[0],
+				pos[1]
+			);
 		};
-		var distance = function(u, v) {
+		function distance (u, v) {
 			return Math.sqrt(Math.pow(u.x - v.x , 2) + Math.pow(u.y - v.y, 2));
 		}
-		var offset = function(location, particle) {
-			return {
-				x: particle.x - location.x,
-				y: particle.y - location.y,
-			}
+		function offset (location, particle) {
+			return Point(
+				particle.x - location.x,
+				particle.y - location.y
+			);
 		}
-		var parent = function(cell) {
-			return {
-				level: cell.level + 1,
-				x: Math.floor(cell.x/2), 
-				y: Math.floor(cell.y/2),
-			};
+		function parent (cell) {
+			return Cell(
+				cell.level + 1,
+				Math.floor(cell.x/2), 
+				Math.floor(cell.y/2)
+			);
 		}
-		var parents = function(cells) {
+		function parents (cells) {
 			var unique = {}
 			for (var i = 0, li = cells.length; i < li; i++) {
 				var parent_ = parent(cells[i]);
@@ -71,63 +78,62 @@ var FMM = (function() {
 			}
 			return parents_;
 		}
-		var children = function(cell) {
+		function children (cell) {
 			var children_ = [];
 			for (var i = 0; i <= 1; i++) {
 				for (var j = 0; j <= 1; j++) {
-					children_.push({
-						level: cell.level - 1,
-						x: cell.x * 2 + i,
-						y: cell.y * 2 + j
-					});
+					children_.push( Cell(
+						cell.level - 1,
+						cell.x * 2 + i,
+						cell.y * 2 + j
+					));
 				}
 			};
 			return children_;
 		}
-		var midpoint = function(cell) {
-			return {
-				x: (cell.x + 0.5) * Math.pow(2, cell.level),
-				y: (cell.y + 0.5) * Math.pow(2, cell.level),
-			}
+		function midpoint (cell) {
+			return Point(
+				(cell.x + 0.5) * Math.pow(2, cell.level),
+				(cell.y + 0.5) * Math.pow(2, cell.level)
+			)
 		}
-		var cell = function(pos, level) {
-			return {
-				level: level,
-				x: Math.floor(pos.x / Math.pow(2, level)),
-				y: Math.floor(pos.y / Math.pow(2, level)),
-			}
+		function cell (pos, level) {
+			return Cell(
+				level,
+				Math.floor(pos.x / Math.pow(2, level)),
+				Math.floor(pos.y / Math.pow(2, level))
+			);
 		}
-		var cells = function(pos) {
+		function cells (pos) {
 			var cells_ = [];
 			for (var level = min_level; level < max_level; level++) {
 				cells_.push(cell(pos, level))
 			};
 			return cells_;
 		}
-		var vicinity = function(pos, level) {
+		function vicinity (pos, level) {
 			var center = cell(pos, level);
 			var vicinity_ = [];
 			for (var i = -1; i <= 1; i++) {
 				for (var j = -1; j <= 1; j++) {
-					vicinity_.push({
-						level: level,
-						x: center.x + i,
-						y: center.y + j,
-					})
+					vicinity_.push( Cell(
+						level,
+						center.x + i,
+						center.y + j
+					));
 				}
 			};
 			return vicinity_;
 		}
-		var vicinities = function(pos) {
+		function vicinities (pos) {
 			var vicinities_ = [];
 			for (var level = min_level; level < max_level; level++) {
 				vicinities_.push(vicinity(pos, level))
 			};
 			return vicinities_;
 		}
-		// returns a field comprised of a single particle
-		var monopole_field_grid = function(pos, options, value_fn) {
-			var grid = {};
+		// adds to grid the effect of a single particle
+		function add_monopole_field_grid (grid, pos, options, value_fn, add_fn) {
 			var cell_ = cell(pos, min_level);
 			var vicinities_ = vicinities(pos);
 			var excluded = {};
@@ -148,48 +154,69 @@ var FMM = (function() {
 						if (excluded[child_key] !== void 0) {
 							continue;
 						};
-						grid[child_key] = format_pos(value_fn(offset(midpoint(child_), pos), options));
+
+						var new_value = format_pos(value_fn(offset(midpoint(child_), pos), options));
+						var old_value = grid[child_key];
+						if (old_value === void 0) {
+							grid[child_key] = new_value;
+							continue;
+						};
+						grid[child_key] = add_fn(old_value, new_value);
 					};
 				};
 			};
-			return grid;
 		}
-		var get_value = function(field, pos){
-			var value = 0;
+
+		function add_field_grids (grid, field2, add_fn) {
+			for(var cell_key in field2){
+				if (grid[cell_key] === void 0) {
+					grid[cell_key] = field2[cell_key];
+					continue;
+				};
+
+				grid[cell_key] = add_fn(grid[cell_key], field2[cell_key]);
+			}
+		}
+
+		function get_value (field, pos){
+			var value = void 0;
 			var cells_ = cells(pos);
 			for (var i = 0, li = cells_.length; i < li; i++) {
 				var cell_ = cells_[i];
 				if (field[cell_hash(cell_)] === void 0) {
 					continue;
 				};
-				if (value !== void 0) {
+				if (value === void 0) {
 					value = field[cell_hash(cell_)];
 					continue;
 				};
 				value = add_fn(field[cell_hash(cell_)], value);
 			};
-			console.log(value);
 			return value;
 		}
 
 		var this_ = {};
 		this_._grid = {};
 		this_.value = function (pos) {
-			return get_value(this_._grid, format_pos(pos));
+			var value = get_value(this_._grid, format_pos(pos));
+			return value;
+		}
+		this_.clear = function () {
+			this_._grid = {};
 		}
 		this_.add_field = function(field) {
-			this_._grid = add_field_grids(this_._grid, field._grid, add_fn);
+			add_field_grids(this_._grid, field._grid, add_fn);
 		}
 		this_.remove_field = function(field) {
-			this_._grid = add_field_grids(this_._grid, field._grid, remove_fn);
+			add_field_grids(this_._grid, field._grid, remove_fn);
 		}
 		this_.add_particle = function(pos, options) {
 			options = options || {};
-			this_._grid = add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), add_fn);
+			add_monopole_field_grid(this_._grid, format_pos(pos), options, value_fn, add_fn);
 		}
 		this_.remove_particle = function(pos, options) {
 			options = options || {};
-			this_._grid = add_field_grids(this_._grid, monopole_field_grid(format_pos(pos), options, value_fn), remove_fn);
+			add_monopole_field_grid(this_._grid, format_pos(pos), options, value_fn, remove_fn);
 		}
 		return this_;
 	}
@@ -218,7 +245,7 @@ var FMM = (function() {
 	}
 
 	// Field3
-	// A class representing 3D mathematical fields using the fast multipole method. 
+	// A class representing 2D mathmatical fields using the fast multipole method. 
 	// Any data type can be used to describe point values in the field, 
 	// provided appropriate values are given for  add_fn and remove_fn 
 	// If add_fn and remove_fn are not defined, the field must operate on scalar numbers
@@ -462,7 +489,7 @@ var FMM = (function() {
 	return FMM;
 })();
 
-THREE == THREE || {};
+var THREE = THREE || {};
 THREE.VectorField2 = function (resolution, range, value_fn) {
 	return FMM.Field2(resolution, range, 
 		function(offset, particle) {
