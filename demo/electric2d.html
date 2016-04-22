@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Field Calculator</title>
+
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+ 		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+		<script src="../fast-multipole-method.js"></script>
+
+		<link  href="styles/main.css" rel="stylesheet"/>
+	</head>
+<body>
+	<svg width="1000" height="500" ng-app="slide-rule-app" ng-controller="scale-controller">
+		<g ng-repeat="particle in particles" transform="translate(500,250)" >
+		  	<circle cx="{{particle.pos.x}}" cy="{{particle.pos.y}}" r="{{particle.mass * 10}}" fill="{{particle.charge>0? 'green':'red'}}" />
+		</g>
+	</svg>
+	<script type="text/javascript">
+
+		var particles = [];
+		for (var i = 0; i < 250; i++) {
+			particles[i] = {
+				pos: 		{ x: (Math.random()-1/2) * 500, y: (Math.random()-1/2) * 500 }, 
+				velocity: 	{ x: 0, y: 0 }, 
+				mass: 	(Math.random()-1/2), 
+				charge: (Math.random()-1/2)
+			};
+		}
+		
+		var app = angular.module('slide-rule-app', []);
+		app.controller('scale-controller', function($scope) {
+			$scope.particles = particles;
+	      	var gravitational_constant = 1;
+			var electric_field = FMM.VectorField2(5, 10000, 
+				function value_function(offset, particle) { 
+				    var distance = Math.sqrt( Math.pow(offset.x, 2) + Math.pow(offset.y, 2) );
+				    var force_per_charge = (1 / 4*Math.PI) *  particle.charge / Math.pow(distance, 2);
+				    var normalized = {
+				        x: offset.x / distance,
+				        y: offset.y / distance,
+				    };
+				    return {
+				        x: normalized.x * force_per_charge,
+				        y: normalized.y * force_per_charge
+				    }
+				}
+			);
+			
+	      	function animate(){
+	      		$scope.$apply(function() {
+	      			// return;
+	      			timestep = 1;
+	      			
+					electric_field.clear();
+					for (var i = 0, li = particles.length; i < li; i++) {
+						var particle = $scope.particles[i];
+						
+						electric_field.add_particle(particle.pos, particle);
+					};
+					for (var i = 0, li = particles.length; i < li; i++) {
+						var particle = $scope.particles[i];
+						var force_per_charge = electric_field.value(particle.pos) || {x:0, y:0};
+						var force = {
+							x: -force_per_charge.x * timestep * particle.charge,
+							y: -force_per_charge.y * timestep * particle.charge
+						};
+						var acceleration = {
+							x: force.x / particle.mass,
+							y: force.y / particle.mass
+						};
+						particle.velocity = {
+							x: particle.velocity.x + acceleration.x,
+							y: particle.velocity.y + acceleration.y
+						};
+						particle.pos = {
+							x: particle.pos.x + particle.velocity.x,
+							y: particle.pos.y + particle.velocity.y
+						};
+					};
+	      		});
+	      	}
+	      	var fps = 30;
+	      	var interval = setInterval(animate, 1000/fps);
+	      	
+      	});
+	</script>
+</body>
+</html>
