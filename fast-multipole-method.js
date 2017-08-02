@@ -26,8 +26,8 @@ var FMM = (function() {
 	// 					This is expressed as a function of distance to a particle.
 	// 					It is highly recommended this be proportionate to an inverse exponent of distance, 
 	// 					e.g. function(distance) { return 1/Math.pow(distance,2) }
-	FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn) {
-
+	// background 	- background value that is applied evenly to every point on the field 
+	FMM.Field2 = function(resolution, range, value_fn, add_fn, remove_fn, background) {
 		function Cell (level, x,y) {
 			return { level: level, x: x, y: y };
 		}
@@ -178,8 +178,8 @@ var FMM = (function() {
 			}
 		}
 
-		function get_value (field, pos){
-			var value = void 0;
+		function get_value (field, pos, background){
+			var value = background;
 			var cells_ = cells(pos);
 			for (var i = 0, li = cells_.length; i < li; i++) {
 				var cell_ = cells_[i];
@@ -198,7 +198,7 @@ var FMM = (function() {
 		var this_ = {};
 		this_._grid = {};
 		this_.value = function (pos) {
-			var value = get_value(this_._grid, format_pos(pos));
+			var value = get_value(this_._grid, format_pos(pos), background);
 			return value;
 		}
 		this_.clear = function () {
@@ -221,13 +221,14 @@ var FMM = (function() {
 		return this_;
 	}
 
-	FMM.ScalarField2 = function(resolution, range, value_fn) {
+	FMM.ScalarField2 = function(resolution, range, value_fn, background) {
 		return FMM.Field2(resolution, range, value_fn, 
 			function(u, v) { return u + v; },
-			function(u, v) { return u - v; });
+			function(u, v) { return u - v; },
+			background || 0);
 	}
 
-	FMM.VectorField2 = function(resolution, range, value_fn) {
+	FMM.VectorField2 = function(resolution, range, value_fn, background) {
 		return FMM.Field2(resolution, range, value_fn, 
 			function(u, v) {
 					 return {
@@ -240,7 +241,8 @@ var FMM = (function() {
 			 		 	x: u.x-v.x, 
 			 		 	y: u.y-v.y, 
 			 		 }; 
-			 	}
+			 	},
+			background || {x:0,y:0}
 		);
 	}
 
@@ -256,7 +258,8 @@ var FMM = (function() {
 	// 					This is expressed as a function of distance to a particle.
 	// 					It is highly recommended this be proportionate to an inverse exponent of distance, 
 	// 					e.g. function(distance) { return 1/Math.pow(distance,2) }
-	FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn) {
+	// background 	- background value that is applied evenly to every point on the field 
+	FMM.Field3 = function(resolution, range, value_fn, add_fn, remove_fn, background) {
 		function Cell (level, x,y,z) {
 			return { level: level, x: x, y: y, z: z };
 		}
@@ -418,8 +421,8 @@ var FMM = (function() {
 			}
 		}
 
-		function get_value (field, pos){
-			var value = void 0;
+		function get_value (field, pos, background){
+			var value = background;
 			var cells_ = cells(pos);
 			for (var i = 0, li = cells_.length; i < li; i++) {
 				var cell_ = cells_[i];
@@ -438,7 +441,7 @@ var FMM = (function() {
 		var this_ = {};
 		this_._grid = {};
 		this_.value = function (pos) {
-			var value = get_value(this_._grid, format_pos(pos));
+			var value = get_value(this_._grid, format_pos(pos), background);
 			return value;
 		}
 		this_.clear = function () {
@@ -461,13 +464,14 @@ var FMM = (function() {
 		return this_;
 	}
 
-	FMM.ScalarField3 = function(resolution, range, value_fn) {
+	FMM.ScalarField3 = function(resolution, range, value_fn, background) {
 		return FMM.Field3(resolution, range, value_fn, 
 			function(u, v) { return u + v; },
-			function(u, v) { return u - v; });
+			function(u, v) { return u - v; },
+			background || 0);
 	}
 
-	FMM.VectorField3 = function(resolution, range, value_fn) {
+	FMM.VectorField3 = function(resolution, range, value_fn, background) {
 		return FMM.Field3(resolution, range, value_fn, 
 			function(u, v) {
 					 return Point(
@@ -482,7 +486,8 @@ var FMM = (function() {
 			 		 	u.y-v.y, 
 			 		 	u.z-v.z
 			 		 ); 
-			 	}
+			 	},
+			background || {x:0,y:0,z:0}
 		);
 	}
 
