@@ -119,21 +119,23 @@
 			var cells_ = cells(pos);
 			var vicinities_ = [];
 			var cell_ = Cell(0, 0,0,0);
+			// for each cell in cells_, find the children of that cell that aren't occupied by pos
 			for (var cell_i = 1; cell_i < cells_.length; cell_i++) {
-				var child_ = cells_[cell_i];
-				var candidates = children(cell_);
-				for (var candidate_i = 0; candidate_i < candidates.length; candidate_i++) {
-					var candidate = candidates[candidate_i];
+				var occupied_ = cells_[cell_i];
+				var children_ = children(cell_);
+				for (var child_i = 0; child_i < children_.length; child_i++) {
+					var child_ = children_[child_i];
 
-					if (!equals(candidate, child_) && !is_out_of_bounds(candidate)) {
-						vicinities_.push(candidate);
+					if (!equals(child_, occupied_) && !is_out_of_bounds(child_)) {
+						vicinities_.push(child_);
 					}
 				}
 
-				cell_ = child_;
+				cell_ = occupied_;
 			}
 			return vicinities_;
 		}
+
 		// adds to grid the effect of a single particle
 		function add_monopole_field_grid (grid, pos, charge, value_fn) {
 			var x = grid.x;
@@ -193,7 +195,7 @@
 			out.x = ox;
 			out.y = oy;
 			out.z = oz;
-			return out
+			return out;
 		}
 
 		function print(field, level) {
@@ -232,12 +234,12 @@
 			_grid.y.fill(0);
 			_grid.z.fill(0);
 		}
-		this_.add_field = function(field) {
-			add_field_grids(_grid, field._grid, add_fn);
-		}
-		this_.remove_field = function(field) {
-			add_field_grids(_grid, field._grid, remove_fn);
-		}
+		// this_.add_field = function(field) {
+		// 	add_field_grids(_grid, field._grid, add_fn);
+		// }
+		// this_.remove_field = function(field) {
+		// 	add_field_grids(_grid, field._grid, remove_fn);
+		// }
 		this_.add_particle = function(pos, charge) {
 			add_monopole_field_grid(_grid, pos,  charge, value_fn );
 		}
