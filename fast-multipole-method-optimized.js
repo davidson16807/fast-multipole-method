@@ -1,6 +1,6 @@
 'use strict'
 
-// var FMM = (function() {
+ var FMM = (function() {
 	var FMM = {};
 
     // Field3
@@ -42,6 +42,10 @@
 		var min_level = 1; 
 		var max_level = Math.ceil(Math.log(range/resolution) / Math.log(2)) + 1; 
 
+		if (max_level > 9) {
+			throw 'grid consumes too much memory! try adjusting resolution or range parameters'
+		}
+debugger;
 		var max_hash_size = 1 << (N*max_level);
 		var _grid = {
 			x: new Float32Array(max_hash_size),
@@ -131,7 +135,7 @@
 			return vicinities_;
 		}
 		// adds to grid the effect of a single particle
-		function add_monopole_field_grid (grid, pos, value_fn) {
+		function add_monopole_field_grid (grid, pos, charge, value_fn) {
 			var x = grid.x;
 			var y = grid.y;
 			var z = grid.z;
@@ -141,7 +145,7 @@
 				var cell_ = vicinities_[i];
 				var cell_hash_ = cell_hash(cell_);
 
-				var new_value = value_fn(offset(midpoint(cell_), pos), pos);
+				var new_value = value_fn(offset(midpoint(cell_), pos), charge);
 				
 				x[cell_hash_] += new_value.x;
 				y[cell_hash_] += new_value.y;
@@ -166,7 +170,7 @@
 			}
 		}
 
-		function get_value (field, pos){
+		function get_value (field, pos, out){
 			var x = field.x;
 			var y = field.y;
 			var z = field.z;
@@ -186,7 +190,10 @@
 				oz += z[cell_hash_];
 			};
 
-			return Point(ox, oy, oz);
+			out.x = ox;
+			out.y = oy;
+			out.z = oz;
+			return out
 		}
 
 		function print(field, level) {
@@ -216,12 +223,14 @@
 
 		var this_ = {};
 		this_._grid = _grid; // NOTE: this is exposed for debugging purposes, only
-		this_.value = function (pos) {
-			var value = get_value(_grid, pos);
-			return value;
+		this_.value = function (pos, out) {
+			out = out || Point(0,0,0);
+			return get_value(_grid, pos, out);
 		}
 		this_.clear = function () {
-			_grid = {};
+			_grid.x.fill(0);
+			_grid.y.fill(0);
+			_grid.z.fill(0);
 		}
 		this_.add_field = function(field) {
 			add_field_grids(_grid, field._grid, add_fn);
@@ -229,8 +238,8 @@
 		this_.remove_field = function(field) {
 			add_field_grids(_grid, field._grid, remove_fn);
 		}
-		this_.add_particle = function(pos) {
-			add_monopole_field_grid(_grid, (pos), value_fn );
+		this_.add_particle = function(pos, charge) {
+			add_monopole_field_grid(_grid, pos, charge, value_fn );
 		}
 		this_.remove_particle = function(pos) {
 			add_monopole_field_grid(_grid, (pos), value_fn );
@@ -242,23 +251,24 @@
 	}
 
 
-//return FMM; })();
+return FMM; })();
 
-var gravitational_constant = 1;
-var field = FMM.Field3(1, 10, function(offset, particle) { 
-	var distance = Math.sqrt( offset.x*offset.x + offset.y*offset.y + offset.z*offset.z );// console.log(offset, particle);
-	var acceleration = gravitational_constant * particle.mass / Math.pow(distance, 2)
-	var normalized = {
-		x: offset.x / distance,
-		y: offset.y / distance,
-		z: offset.z / distance,
-	};
-	return {
-		x: normalized.x * acceleration,
-		y: normalized.y * acceleration, 
-		z: normalized.z * acceleration
-	};
-})
-
-field.add_particle({x:1,y:0,z:0, mass: 1});
-console.log(field.value({x:3,y:0,z:0}));
+//var gravitational_constant = 1;
+//var field = FMM.Field3(1, 10, function(offset, charge) { 
+//	var distance = Math.sqrt( offset.x*offset.x + offset.y*offset.y + offset.z*offset.z );// console.log(offset, particle);
+//	var acceleration = gravitational_constant * charge / Math.pow(distance, 2)
+//	var normalized = {
+//		x: offset.x / distance,
+//		y: offset.y / distance,
+//		z: offset.z / distance,
+//	};
+//	return {
+//		x: normalized.x * acceleration,
+//		y: normalized.y * acceleration, 
+//		z: normalized.z * acceleration
+//	};
+//})
+//
+//field.add_particle({x:1,y:0,z:0}, 1);
+//console.log(field.value({x:3,y:0,z:0}));
+//
