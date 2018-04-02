@@ -111,13 +111,13 @@
 
 	    var particles = [];
 	    var mass_attributes = particleShader.attributes.mass;
-	    for (var i = 0; i < 200; i++) {
+	    for (var i = 0; i < 10000; i++) {
 	    	particle = {
 	    		mass: 		Math.random() * earth_mass,
 	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ),
+	    						(Math.random() + Math.random()) * astronomical_unit / 10 ,
+	    						(Math.random() + Math.random()) * astronomical_unit / 10 ,
+	    						(Math.random() + Math.random()) * astronomical_unit / 10 ),
 	    		velocity: 	new THREE.Vector3(
 	    						(Math.random() - 1/2) * moon_speed,
 	    						(Math.random() - 1/2) * moon_speed,
@@ -207,7 +207,7 @@
 				seconds = 1;
 			}
 
-			gravity_field.clear();
+			 gravity_field.clear();
 			for (var i = 0, li = particles.length; i < li; i++) {
 				var particle = particles[i];
 				gravity_field.add_particle(particle.pos, particle.mass);
@@ -221,6 +221,10 @@
 				particle.pos.add(particle.velocity.clone().multiplyScalar(timestep));
 				particleGeometry.vertices[i] = particle.pos.clone().multiplyScalar(1/astronomical_unit);
 			};
+			//for (var i = 0, li = particles.length; i < li; i++) {
+			//	var particle = particles[i];
+			//	gravity_field.remove_particle(particle.pos, particle.mass);
+			//};
 			particleGeometry.verticesNeedUpdate = true;
 		}
 

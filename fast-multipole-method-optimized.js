@@ -45,7 +45,7 @@
 		if (max_level > 9) {
 			throw 'grid consumes too much memory! try adjusting resolution or range parameters'
 		}
-debugger;
+
 		var max_hash_size = 1 << (N*max_level);
 		var _grid = {
 			x: new Float32Array(max_hash_size),
@@ -239,10 +239,10 @@ debugger;
 			add_field_grids(_grid, field._grid, remove_fn);
 		}
 		this_.add_particle = function(pos, charge) {
-			add_monopole_field_grid(_grid, pos, charge, value_fn );
+			add_monopole_field_grid(_grid, pos,  charge, value_fn );
 		}
-		this_.remove_particle = function(pos) {
-			add_monopole_field_grid(_grid, (pos), value_fn );
+		this_.remove_particle = function(pos, charge) {
+			add_monopole_field_grid(_grid, pos, -charge, value_fn );
 		}
 		this_.print = function(level) {
 			print(_grid, level);
