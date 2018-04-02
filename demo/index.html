@@ -8,7 +8,7 @@
 
 		<script src="http://code.jquery.com/jquery.min.js"></script>
 
-		<script src="vendor/three.js/Three.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/91/three.js"></script>
 		<script src="vendor/three.js/Detector.js"></script>
 		<script src="vendor/three.js/OrbitControls.js"></script>
 		<script src="vendor/three.js/Stats.js"></script>
@@ -17,7 +17,7 @@
 		<script src="vendor/threex/THREEx.WindowResize.js"></script>
 		<script src="vendor/threex.dragpancontrols.js"></script>
 		<script src="vendor/threex/THREEx.Debug.js"></script>
-		<script src="../fast-multipole-method.js"></script>
+		<script src="../fast-multipole-method-optimized.js"></script>
 
 		<link  href="styles/main.css" rel="stylesheet"/>
 	</head>
@@ -73,16 +73,17 @@
 	    var image = document.createElement( 'img' );
 		var renderStats;
 
-		var particleGeometry	= new THREE.Geometry();
+		var N = 10000;
+
+		var particleGeometry	= new THREE.BufferGeometry();
+		var velocities = new Float32Array(3*N);
+		var positions = new Float32Array(3*N);
+		var mass = new Float32Array(1*N);
+		particleGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+		particleGeometry.addAttribute( 'mass', new THREE.BufferAttribute( mass, 1 ) );
 	    var particleShader = new THREE.ShaderMaterial({
 	        vertexShader: $('#particle-vertex-shader').text(),
 	        fragmentShader: $('#particle-fragment-shader').text(),
-	        attributes: {
-	        	mass:{
-	        		type: 'f',
-	        		value: []
-	        	}
-	        },
 	        uniforms: {}
 	    });
 
@@ -90,36 +91,38 @@
 	    var moon_speed = 0; // m / s
 	    var astronomical_unit = 1e11; //m
 	    var gravitational_constant = 6.67e-11; //m/s^2 m^2 / kg^2
-	    var gravity_field = THREE.VectorField3(astronomical_unit/100, 10*astronomical_unit, 
-	    	function value_function(offset, particle) { 
-	    	    var distance = offset.length();
-	    	    var acceleration = gravitational_constant * particle.mass / Math.pow(distance, 2);
-	    	    return offset.setLength(acceleration);
-	    	}
-	    );
+		var acceleration = {x:0,y:0,z:0};
+		var position = {x:0,y:0,z:0};
 
-	    var particles = [];
-	    var mass_attributes = particleShader.attributes.mass;
-	    for (var i = 0; i < 200; i++) {
-	    	particle = {
-	    		mass: 		Math.random() * earth_mass,
-	    		pos: 		new THREE.Vector3(
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ,
-	    						(Math.random() - 1/2) * astronomical_unit / 10 ),
-	    		velocity: 	new THREE.Vector3(
-	    						(Math.random() - 1/2) * moon_speed,
-	    						(Math.random() - 1/2) * moon_speed,
-	    						(Math.random() - 1/2) * moon_speed ),
-	    	};
-	    	gravity_field.add_particle(particle.pos, particle);
+		var gravity_field = FMM.Field3(astronomical_unit/100, 1*astronomical_unit, 
+			function(offset, mass) { 
+				var distance = Math.sqrt( offset.x*offset.x + offset.y*offset.y + offset.z*offset.z );// console.log(offset, particle);
+				var acceleration = gravitational_constant * mass / Math.pow(distance, 2)
+				var normalized = {
+					x: offset.x / distance,
+					y: offset.y / distance,
+					z: offset.z / distance,
+				};
+				return {
+					x: normalized.x * acceleration,
+					y: normalized.y * acceleration, 
+					z: normalized.z * acceleration
+				};
+			}
+		);
 
-	    	particleGeometry.vertices.push(particle.pos.clone().multiplyScalar(1/astronomical_unit));
+	    for (var i = 0; i < N; i++) {
 
-	    	particles[i] = particle;
-	    	mass_attributes.value[i] = particle.mass;
+			velocities[3*i+0] = (Math.random() - 1/2) * moon_speed;
+			velocities[3*i+1] = (Math.random() - 1/2) * moon_speed;
+			velocities[3*i+2] = (Math.random() - 1/2) * moon_speed;
+
+			positions[3*i+0] = (Math.random() + Math.random()) * astronomical_unit / 10;
+			positions[3*i+1] = (Math.random() + Math.random()) * astronomical_unit / 10;
+			positions[3*i+2] = (Math.random() + Math.random()) * astronomical_unit / 10;
+
+	    	mass[i] = Math.random() * earth_mass;
 	    };
-	    mass_attributes.needsUpdate = true;
 
 		// particleShader.attributes.mass.needsUpdate = true;
 		var particleSystem = new THREE.ParticleSystem(particleGeometry, particleShader);
@@ -154,8 +157,8 @@
 			scene = new THREE.Scene();
 
 			// put a camera in the scene
-			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 10000 );
-			camera.position.set(0, 0, 1/2);
+			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01 * astronomical_unit, 10000 * astronomical_unit );
+			camera.position.set(0, 0, 1/2 * astronomical_unit);
 			scene.add(camera);
 
 			// create a camera contol
@@ -197,20 +200,33 @@
 			}
 
 			gravity_field.clear();
-			for (var i = 0, li = particles.length; i < li; i++) {
-				var particle = particles[i];
-				gravity_field.add_particle(particle.pos, particle);
+			for (var i = 0, li = N; i < li; i++) {
+				position.x = positions[3*i+0];
+				position.y = positions[3*i+1];
+				position.z = positions[3*i+2];
+				gravity_field.add_particle(position, mass[i]);
 			};
 
 			var timestep = seconds * 60*60*24*15;
-			for (var i = 0, li = particles.length; i < li; i++) {
-				var particle = particles[i];
-				var acceleration = gravity_field.value(particle.pos) || new THREE.Vector3();
-				particle.velocity.add(acceleration.multiplyScalar(timestep));
-				particle.pos.add(particle.velocity.clone().multiplyScalar(timestep));
-				particleGeometry.vertices[i] = particle.pos.clone().multiplyScalar(1/astronomical_unit);
+			for (var i = 0, li = N; i < li; i++) {
+				position.x = positions[3*i+0];
+				position.y = positions[3*i+1];
+				position.z = positions[3*i+2];
+				gravity_field.value(position, acceleration);
+				velocities[3*i+0] += acceleration.x*timestep;
+				velocities[3*i+1] += acceleration.y*timestep;
+				velocities[3*i+2] += acceleration.z*timestep;
+			};            
+			for (var i = 0, li = N; i < li; i++) {
+				positions[3*i+0] += velocities[3*i+0]*timestep;
+				positions[3*i+1] += velocities[3*i+1]*timestep;
+				positions[3*i+2] += velocities[3*i+2]*timestep;
 			};
-			particleGeometry.verticesNeedUpdate = true;
+			//for (var i = 0, li = N; i < li; i++) {
+			//	var particle = particles[i];
+			//	gravity_field.remove_particle(particle.pos, particle.mass);
+			//};
+			particleGeometry.attributes.position.needsUpdate = true;
 		}
 
 	</script>
